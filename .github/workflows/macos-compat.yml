@@ -1,0 +1,80 @@
+name: macOS Compatibility Check
+
+on:
+  schedule:
+    - cron: '0 12 * * 5' # 毎週金曜 21:00 JST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  macos-compat:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Record macOS version
+        run: |
+          echo "## macOS Version Info" >> $GITHUB_STEP_SUMMARY
+          sw_vers >> $GITHUB_STEP_SUMMARY
+
+      - name: Build Swift helper
+        run: swift build -c release
+        working-directory: swift-helper
+
+      - name: Smoke test
+        run: ./swift-helper/.build/release/reminders-helper --help
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Type check
+        run: bun run typecheck
+
+  create-issue:
+    runs-on: ubuntu-latest
+    needs: macos-compat
+    if: failure()
+    steps:
+      - name: Check for existing issue
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing=$(gh issue list \
+            --repo ${{ github.repository }} \
+            --search "[CI] macOS 互換性チェック失敗 in:title" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+          echo "existing=$existing" >> $GITHUB_OUTPUT
+
+      - name: Create issue
+        if: steps.check.outputs.existing == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --repo ${{ github.repository }} \
+            --title "[CI] macOS 互換性チェック失敗" \
+            --body "## 概要
+
+          macOS 互換性チェック CI が失敗しました。
+
+          ## 詳細
+
+          - **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          - **トリガー**: ${{ github.event_name }}
+
+          ## 対応
+
+          1. 上記 Workflow Run のログを確認
+          2. Swift ビルドエラーまたは TypeScript エラーを特定
+          3. macOS / Xcode / EventKit の変更に起因するか調査"
