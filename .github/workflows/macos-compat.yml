@@ -13,7 +13,7 @@ jobs:
   macos-compat:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Record macOS version
         run: |
