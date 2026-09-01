@@ -1,0 +1,10 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "このリポジトリでは Renovate を使わない。依存更新は Dependabot が担当する。",
+    "Dependabot が npm と github-actions を担当しており、他に依存ファイルは無い。",
+    "アプリ側の設定だけで外すと Git に記録が残らず、再インストール時に静かに戻る。",
+    "意図をここに書いておけば、権限が復活しても動き出さない。"
+  ],
+  "enabled": false
+}
