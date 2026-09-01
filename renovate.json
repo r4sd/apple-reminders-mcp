@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Asia/Tokyo",
+  "dependencyDashboard": true,
+  "labels": ["dependencies"],
+  "description": [
+    "Renovate は Swift Package Manager の依存だけを担当する。",
+    "Dependabot が Swift をサポートしていないため (公式のサポート対象一覧に無い)、",
+    "swift-helper/Package.swift はここでしか更新できない。",
+    "npm と github-actions は Dependabot が担当するので、二重に PR が立たないよう除外する。"
+  ],
+  "enabledManagers": ["swift"],
+  "packageRules": [
+    {
+      "description": "Swift 依存の patch/minor は CI 通過後に自動マージする。major は人手で確認する",
+      "matchManagers": ["swift"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "platformAutomerge": true
+    }
+  ]
+}
